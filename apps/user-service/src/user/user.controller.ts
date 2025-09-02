@@ -5,7 +5,9 @@ import {
   CreateUserDto, 
   LoginDto, 
   UpdateUserDto, 
-  UserResponseDto, 
+  UserResponseDto,
+  FindUsersDto,
+  PaginationResponseDto,
   MESSAGE_PATTERNS,
   ServiceResponse 
 } from '@app/common';
@@ -45,6 +47,17 @@ export class UserController {
       return { success: true, data: user };
     } catch (error) {
       this.logger.error('Failed to find user by email', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.USER_FIND_ALL)
+  async findAllUsers(@Payload() findUsersDto: FindUsersDto): Promise<ServiceResponse<PaginationResponseDto<UserResponseDto>>> {
+    try {
+      const result = await this.userService.findAll(findUsersDto);
+      return { success: true, data: result };
+    } catch (error) {
+      this.logger.error('Failed to find users', error);
       return { success: false, error: error.message };
     }
   }

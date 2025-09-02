@@ -7,13 +7,22 @@ A production-ready microservices e-commerce platform built with **NestJS**, **Ty
 This project implements a modern microservices architecture with the following components:
 
 ### Services
-- **API Gateway** (`port: 3000`) - REST API gateway with authentication, rate limiting, and request routing
-- **User Service** (`port: 3001`) - User management, authentication, and JWT validation
-- **Product Service** (`port: 3002`) - Product catalog, search, and inventory management
-- **Order Service** (`port: 3003`) - Order processing, lifecycle management, and statistics
-- **Notification Service** (`port: 3004`) - Email/SMS notifications via SMTP and Twilio
+- **API Gateway** (`port: 3001`) - REST API gateway with authentication, rate limiting, and request routing
+- **User Service** (`port: 3002`) - User management, authentication, and JWT validation
+- **Product Service** (`port: 3003`) - Product catalog, search, and inventory management
+- **Order Service** (`port: 3004`) - Order processing, lifecycle management, and statistics
+- **Notification Service** (`port: 3005`) - Email/SMS notifications via SMTP and Twilio
+- **Frontend** (`port: 3000`) - React Admin Dashboard with Ant Design Pro
 
 ### Technologies
+
+#### Frontend
+- **React 18** - Modern React with hooks
+- **TypeScript** - Type-safe development
+- **Ant Design Pro** - Enterprise-class UI components
+- **Vite** - Fast build tool and development server
+- **Redux Toolkit** - State management
+- **React Router** - Client-side routing
 
 #### Backend
 - **NestJS** - Progressive Node.js framework
@@ -40,7 +49,8 @@ microservices-ecommerce/
 │   ├── user-service/              # User management service
 │   ├── product-service/           # Product catalog service
 │   ├── order-service/             # Order processing service
-│   └── notification-service/      # Email/SMS notification service
+│   ├── notification-service/      # Email/SMS notification service
+│   └── frontend/                  # React Admin Dashboard
 ├── libs/                          # Shared libraries
 │   ├── common/                    # DTOs, constants, guards, decorators
 │   ├── database/                  # TypeORM entities and config
@@ -148,16 +158,20 @@ npm run start:dev notification-service
 
 # Terminal 5: API Gateway
 npm run start:dev api-gateway
+
+# Terminal 6: Frontend (React Admin Dashboard)
+npm run start:frontend
 ```
 
 ### 6. Verify Setup
 
-Visit the API documentation:
-- **Swagger UI**: http://localhost:3000/api/docs
+Visit the application:
+- **Frontend Dashboard**: http://localhost:3000
+- **API Documentation**: http://localhost:3001/api/docs
 
 Test the health endpoints:
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3001/health
 curl http://localhost:3001/health  # User service
 curl http://localhost:3002/health  # Product service
 ```

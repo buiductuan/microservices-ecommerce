@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Databases
   postgres:
@@ -239,6 +237,17 @@ services:
       - ./apps/notification-service:/app/apps/notification-service
       - ./libs:/app/libs
       - /app/node_modules
+
+  # frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: infrastructure/docker/Dockerfile.frontend
+  #   ports:
+  #     - "3000:80"
+  #   depends_on:
+  #     - api-gateway
+  #   environment:
+  #     - VITE_API_BASE_URL=http://localhost:3001/api
 
 volumes:
   postgres_data:

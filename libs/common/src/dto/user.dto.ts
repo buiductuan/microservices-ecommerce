@@ -1,5 +1,6 @@
 import { IsEmail, IsString, IsOptional, IsEnum, MinLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PaginationDto } from './pagination.dto';
 
 export enum UserRole {
   USER = 'user',
@@ -90,4 +91,16 @@ export class JwtPayload {
   role: UserRole;
   iat?: number;
   exp?: number;
+}
+
+export class FindUsersDto extends PaginationDto {
+  @ApiPropertyOptional({ example: 'john', description: 'Search by name or email' })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional({ enum: UserRole, description: 'Filter by user role' })
+  @IsOptional()
+  @IsEnum(UserRole)
+  role?: UserRole;
 }

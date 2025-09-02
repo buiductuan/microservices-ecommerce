@@ -1,9 +1,12 @@
-import { Controller, Get, Put, Delete, Body, Param, UseGuards, Inject } from '@nestjs/common';
+import { Controller, Get, Put, Delete, Body, Param, Query, UseGuards, Inject } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { 
   UpdateUserDto, 
-  UserResponseDto, 
+  UserResponseDto,
+  FindUsersDto,
+  PaginationResponseDto,
+  UserRole,
   MESSAGE_PATTERNS, 
   SERVICES,
   JwtAuthGuard,
@@ -20,6 +23,19 @@ export class UserController {
   constructor(
     @Inject(SERVICES.USER_SERVICE) private readonly userClient: ClientProxy,
   ) {}
+
+  @Get()
+  @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by name or email' })
+  @ApiQuery({ name: 'role', required: false, enum: UserRole, description: 'Filter by user role' })
+  async getUsers(@Query() findUsersDto: FindUsersDto): Promise<PaginationResponseDto<UserResponseDto>> {
+    const result = await firstValueFrom(
+      this.userClient.send(MESSAGE_PATTERNS.USER_FIND_ALL, findUsersDto)
+    );
+    return result.data;
+  }
 
   @Get('profile')
   @ApiResponse({ status: 200, description: 'User profile retrieved successfully' })

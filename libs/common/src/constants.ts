@@ -12,6 +12,7 @@ export const MESSAGE_PATTERNS = {
   USER_CREATE: 'user.create',
   USER_FIND_BY_ID: 'user.findById',
   USER_FIND_BY_EMAIL: 'user.findByEmail',
+  USER_FIND_ALL: 'user.findAll',
   USER_UPDATE: 'user.update',
   USER_DELETE: 'user.delete',
   USER_VALIDATE: 'user.validate',

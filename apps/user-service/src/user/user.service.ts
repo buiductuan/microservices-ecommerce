@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { ClientProxy } from '@nestjs/microservices';
 import * as bcrypt from 'bcryptjs';
 import { User } from '@app/database';
-import { CreateUserDto, UpdateUserDto, UserResponseDto, EVENT_PATTERNS } from '@app/common';
+import { CreateUserDto, UpdateUserDto, UserResponseDto, FindUsersDto, PaginationResponseDto, EVENT_PATTERNS } from '@app/common';
 
 @Injectable()
 export class UserService {
@@ -60,6 +60,50 @@ export class UserService {
     }
 
     return this.toResponseDto(user);
+  }
+
+  async findAll(findUsersDto: FindUsersDto): Promise<PaginationResponseDto<UserResponseDto>> {
+    const { page = 1, limit = 10, search, role } = findUsersDto;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.userRepository.createQueryBuilder('user');
+
+    // Apply search filter
+    if (search) {
+      queryBuilder.andWhere(
+        '(LOWER(user.firstName) LIKE LOWER(:search) OR LOWER(user.lastName) LIKE LOWER(:search) OR LOWER(user.email) LIKE LOWER(:search))',
+        { search: `%${search}%` }
+      );
+    }
+
+    // Apply role filter
+    if (role) {
+      queryBuilder.andWhere('user.role = :role', { role });
+    }
+
+    // Get total count for pagination
+    const total = await queryBuilder.getCount();
+
+    // Apply pagination and ordering
+    const users = await queryBuilder
+      .orderBy('user.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit)
+      .getMany();
+
+    const pages = Math.ceil(total / limit);
+
+    return {
+      data: users.map(user => this.toResponseDto(user)),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages,
+        hasNext: page < pages,
+        hasPrevious: page > 1,
+      },
+    };
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
