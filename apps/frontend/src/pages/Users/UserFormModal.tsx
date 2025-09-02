@@ -36,7 +36,10 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ visible, onCancel, onOk, 
       destroyOnClose
     >
       <Form form={form} layout="vertical" initialValues={initialValues}>
-        <Form.Item name="name" label="Name" rules={[{ required: true, message: 'Please input the name!' }]}> 
+        <Form.Item name="firstName" label="First Name" rules={[{ required: true, message: 'Please input the first name!' }]}> 
+          <Input />
+        </Form.Item>
+        <Form.Item name="lastName" label="Last Name" rules={[{ required: true, message: 'Please input the last name!' }]}> 
           <Input />
         </Form.Item>
         <Form.Item name="email" label="Email" rules={[{ required: true, message: 'Please input the email!' }]}> 

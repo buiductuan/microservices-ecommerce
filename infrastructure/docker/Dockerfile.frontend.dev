@@ -1,0 +1,28 @@
+FROM node:22-slim
+
+# Install necessary packages including python3 and build tools for native modules
+RUN apt-get update && apt-get install -y \
+    dumb-init \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app/apps/frontend
+
+# Copy frontend package files first for better caching
+COPY apps/frontend/package*.json ./
+
+# Install dependencies and manually install the problematic rollup native module
+RUN npm ci --include=dev --force || true
+RUN npm install @rollup/rollup-linux-arm64-gnu --save-dev --force || true
+RUN npm install @rollup/rollup-linux-x64-gnu --save-dev --force || true
+
+# Copy the frontend source code (will be overridden by volumes)
+COPY apps/frontend/ ./
+
+EXPOSE 3000
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]

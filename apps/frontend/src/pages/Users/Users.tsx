@@ -62,8 +62,14 @@ const Users: React.FC = () => {
 
   const columns: ProColumns<User>[] = [
     {
-      title: 'Name',
-      dataIndex: 'name',
+      title: 'FirstName',
+      dataIndex: 'firstName',
+      sorter: true,
+      render: (text) => <a>{text}</a>,
+    },
+    {
+      title: 'LastName',
+      dataIndex: 'lastName',
       sorter: true,
       render: (text) => <a>{text}</a>,
     },

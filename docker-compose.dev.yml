@@ -1,0 +1,238 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api-gateway.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=ecommerce
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=your-super-secret-jwt-key
+      - USER_SERVICE_HOST=user-service
+      - USER_SERVICE_PORT=3001
+      - PRODUCT_SERVICE_HOST=product-service
+      - PRODUCT_SERVICE_PORT=3002
+      - ORDER_SERVICE_HOST=order-service
+      - ORDER_SERVICE_PORT=3003
+      - NOTIFICATION_SERVICE_HOST=notification-service
+      - NOTIFICATION_SERVICE_PORT=3004
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - user-service
+      - product-service
+      - order-service
+      - notification-service
+    volumes:
+      - ./apps/api-gateway:/app/apps/api-gateway
+      - ./libs:/app/libs
+      - /app/node_modules
+
+  user-service:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.user-service.dev
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - HOST=0.0.0.0
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=ecommerce
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_CLIENT_ID=user-service
+      - KAFKA_GROUP_ID=user-group
+    depends_on:
+      - postgres
+      - kafka
+    volumes:
+      - ./apps/user-service:/app/apps/user-service
+      - ./libs:/app/libs
+      - /app/node_modules
+
+  product-service:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.product-service.dev
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - HOST=0.0.0.0
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=ecommerce
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_CLIENT_ID=product-service
+      - KAFKA_GROUP_ID=product-group
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    volumes:
+      - ./apps/product-service:/app/apps/product-service
+      - ./libs:/app/libs
+      - /app/node_modules
+
+  order-service:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.order-service.dev
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - HOST=0.0.0.0
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=ecommerce
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_CLIENT_ID=order-service
+      - KAFKA_GROUP_ID=order-group
+      - USER_SERVICE_HOST=user-service
+      - USER_SERVICE_PORT=3001
+      - PRODUCT_SERVICE_HOST=product-service
+      - PRODUCT_SERVICE_PORT=3002
+    depends_on:
+      - postgres
+      - kafka
+      - user-service
+      - product-service
+    volumes:
+      - ./apps/order-service:/app/apps/order-service
+      - ./libs:/app/libs
+      - /app/node_modules
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.notification-service.dev
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+      - HOST=0.0.0.0
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=ecommerce
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_CLIENT_ID=notification-service
+      - KAFKA_GROUP_ID=notification-group
+      - SMTP_HOST=localhost
+      - SMTP_PORT=587
+      - SMTP_USER=test@example.com
+      - SMTP_PASS=password
+      - TWILIO_ACCOUNT_SID=your_twilio_account_sid
+      - TWILIO_AUTH_TOKEN=your_twilio_auth_token
+    depends_on:
+      - postgres
+      - kafka
+    volumes:
+      - ./apps/notification-service:/app/apps/notification-service
+      - ./libs:/app/libs
+      - /app/node_modules
+
+  # frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: infrastructure/docker/Dockerfile.frontend.dev
+  #   ports:
+  #     - "3600:3000"
+  #   depends_on:
+  #     - api-gateway
+  #   volumes:
+  #     - ./apps/frontend:/app/apps/frontend
+  #     - /app/node_modules
+  #   environment:
+  #     - VITE_API_BASE_URL=http://localhost:3000/api
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ecommerce
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.7.0
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "kafka:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.7.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+volumes:
+  postgres_data:
+  redis_data:

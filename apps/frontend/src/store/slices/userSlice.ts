@@ -74,8 +74,8 @@ const userSlice = createSlice({
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.users = action.payload.data;
-        state.total = action.payload.total;
+        state.users = action.payload.data.data;
+        state.total = action.payload.data.pagination.total;
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.isLoading = false;
